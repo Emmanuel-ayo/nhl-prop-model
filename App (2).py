@@ -43,3 +43,23 @@ basis = st.radio("Hit Rate Based On", ["Season Avg", "L5 Avg", "L10 Avg"])
 rate = round((row[basis] / line) * 100, 1) if line > 0 else 0
 
 st.metric("Hit Rate", f"{rate}%")
+st.subheader("📊 Player Projections Table")
+
+table_df = df_date.copy()
+
+# Generate projections for all players
+features = ["L5 Avg", "L10 Avg", "TOI_min"]
+table_df["Projected SOG"] = model.predict(table_df[features])
+
+# Select columns to display
+display_cols = [
+    "Name", "Team", "Opponent",
+    "Projected SOG",
+    "Season Avg", "L5 Avg", "L10 Avg", "TOI_min"
+]
+
+st.dataframe(
+    table_df[display_cols]
+    .sort_values("Projected SOG", ascending=False),
+    use_container_width=True
+)
