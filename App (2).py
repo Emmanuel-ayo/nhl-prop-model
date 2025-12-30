@@ -57,8 +57,6 @@ X_pred = table_df[features].astype(float).values  # 👈 IMPORTANT
 
 table_df["Projected SOG"] = model.predict(X_pred)
 
-
-
 # Select columns to display
 display_cols = [
     "Name", "Team", "Opponent",
@@ -71,3 +69,35 @@ st.dataframe(
     .sort_values("Projected SOG", ascending=False),
     use_container_width=True
 )
+
+st.subheader("🔍 Player Search")
+
+player_names = df["Name"].dropna().unique()
+selected_player = st.selectbox(
+    "Select a player",
+    sorted(player_names)
+)
+
+player_df = df[df["Name"] == selected_player].sort_values("Date", ascending=False)
+
+latest = player_df.iloc[0]
+
+features = ["L5 Avg", "L10 Avg", "TOI_min"]
+X_player = latest[features].astype(float).values.reshape(1, -1)
+proj = model.predict(X_player)[0]
+
+c1, c2, c3 = st.columns(3)
+c1.metric("Projected SOG", round(proj, 2))
+c2.metric("Season Avg", round(latest["Season Avg"], 2))
+c3.metric("Opponent", latest["Opponent"])
+
+st.markdown("### 📊 Recent Games")
+st.dataframe(
+    player_df[
+        ["Date", "Opponent", "Season Avg", "L5 Avg", "L10 Avg", "TOI_min"]
+    ],
+    use_container_width=True
+)
+
+
+
