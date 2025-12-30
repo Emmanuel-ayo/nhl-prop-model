@@ -24,18 +24,7 @@ st.title("🏒 NHL SOG Prop Model")
 date = st.selectbox("Date", sorted(df["Date"].dropna().unique()))
 df_date = df[df["Date"] == date]
 
-player = st.selectbox("Player", df_date["Name"].unique())
-row = df_date[df_date["Name"] == player].iloc[0]
 
-features = ["L5 Avg", "L10 Avg", "TOI_min"]
-X = row[features].values.reshape(1, -1)
-projection = model.predict(X)[0]
-
-c1, c2, c3, c4 = st.columns(4)
-c1.metric("Projected SOG", round(projection, 2))
-c2.metric("Season Avg", row["Season Avg"])
-c3.metric("L5 Avg", row["L5 Avg"])
-c4.metric("L10 Avg", row["L10 Avg"])
 
 line = st.number_input("Shot Line", value=2.5, step=0.5)
 
@@ -100,13 +89,28 @@ st.dataframe(
     use_container_width=True
 )
 
-
 st.markdown("---")
-st.subheader("🔍 Player Search (Debug)")
-
-st.write("PLAYER SEARCH LOADED")
+st.subheader("🔍 Player Search")
 
 player_names = sorted(df["Name"].dropna().unique())
-selected_player = st.selectbox("Select Player", player_names)
+selected_player = st.selectbox("Search player", player_names)
 
-st.write("Selected:", selected_player)
+player_df = df[df["Name"] == selected_player].sort_values("Date", ascending=False)
+latest = player_df.iloc[0]
+
+features = ["L5 Avg", "L10 Avg", "TOI_min"]
+X_player = latest[features].astype(float).values.reshape(1, -1)
+proj = model.predict(X_player)[0]
+
+c1, c2, c3 = st.columns(3)
+c1.metric("Projected SOG", round(proj, 2))
+c2.metric("Season Avg", round(latest["Season Avg"], 2))
+c3.metric("Opponent", latest["Opponent"])
+
+st.markdown("### 📊 Recent Games")
+st.dataframe(
+    player_df[
+        ["Date", "Opponent", "Season Avg", "L5 Avg", "L10 Avg", "TOI_min"]
+    ],
+    use_container_width=True
+)
