@@ -48,13 +48,15 @@ st.subheader("📊 Player Projections Table")
 table_df = df_date.copy()
 
 # Generate projections for all players
+
 features = ["L5 Avg", "L10 Avg", "TOI_min"]
 
 table_df = table_df.dropna(subset=features)
 
-X_pred = table_df[features].astype(float)
+X_pred = table_df[features].astype(float).values  # 👈 IMPORTANT
 
 table_df["Projected SOG"] = model.predict(X_pred)
+
 
 
 # Select columns to display
