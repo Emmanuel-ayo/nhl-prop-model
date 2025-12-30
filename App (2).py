@@ -49,7 +49,13 @@ table_df = df_date.copy()
 
 # Generate projections for all players
 features = ["L5 Avg", "L10 Avg", "TOI_min"]
-table_df["Projected SOG"] = model.predict(table_df[features])
+
+table_df = table_df.dropna(subset=features)
+
+X_pred = table_df[features].astype(float)
+
+table_df["Projected SOG"] = model.predict(X_pred)
+
 
 # Select columns to display
 display_cols = [
