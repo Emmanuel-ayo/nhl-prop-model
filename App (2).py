@@ -101,4 +101,12 @@ st.dataframe(
 )
 
 
+st.markdown("---")
+st.subheader("🔍 Player Search (Debug)")
 
+st.write("PLAYER SEARCH LOADED")
+
+player_names = sorted(df["Name"].dropna().unique())
+selected_player = st.selectbox("Select Player", player_names)
+
+st.write("Selected:", selected_player)
