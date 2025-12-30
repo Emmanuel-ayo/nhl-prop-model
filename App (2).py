@@ -69,6 +69,7 @@ st.dataframe(
     .sort_values("Projected SOG", ascending=False),
     use_container_width=True
 )
+st.write("PLAYER SEARCH LOADED")
 
 st.subheader("🔍 Player Search")
 
