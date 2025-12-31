@@ -4,11 +4,9 @@ import joblib
 import math
 
 
-st.write("🔥 THIS IS APP (2).PY 🔥")
-st.stop()
 
 # ---------------------------
-# Helper
+# Helper function
 # ---------------------------
 def toi_to_minutes(toi):
     if pd.isna(toi):
@@ -35,27 +33,15 @@ goals_model = joblib.load("goals_model.pkl")
 st.set_page_config(layout="wide")
 st.title("🏒 NHL Player Prop Model")
 
-stat = st.radio(
-    "Select Stat",
-    ["Shots on Goal", "Goals"],
-    horizontal=True
-)
+stat = st.radio("Select Stat", ["Shots on Goal", "Goals"], horizontal=True)
 
-date = st.selectbox(
-    "Game Date",
-    sorted(df["Date"].dropna().unique())
-)
-
+date = st.selectbox("Game Date", sorted(df["Date"].dropna().unique()))
 df_date = df[df["Date"] == date]
 
 # ---------------------------
-# Player selection (THIS DEFINES `row`)
+# Player selection
 # ---------------------------
-player = st.selectbox(
-    "Select Player",
-    sorted(df_date["Name"].unique())
-)
-
+player = st.selectbox("Select Player", sorted(df_date["Name"].unique()))
 row = df_date[df_date["Name"] == player].iloc[0]
 
 # ---------------------------
@@ -71,11 +57,11 @@ else:
 
 c1, c2, c3 = st.columns(3)
 c1.metric("Projection", round(proj, 2))
-c2.metric("Season Avg", round(row["Season Avg"], 2))
-c3.metric("Opponent", row["Opponent"])
+c2.metric("Season Avg", round(row.get("Season Avg", 0), 2))
+c3.metric("Opponent", row.get("Opponent", "N/A"))
 
 # ---------------------------
-# Hit Rate (NOW row EXISTS)
+# Hit Rate (safe calculation)
 # ---------------------------
 st.markdown("### 🎯 Hit Rate")
 
@@ -85,13 +71,15 @@ line = st.number_input(
     step=0.5
 )
 
-basis = st.radio(
-    "Hit Rate Based On",
-    ["Season Avg", "L5 Avg", "L10 Avg"]
-)
+basis = st.radio("Hit Rate Based On", ["Season Avg", "L5 Avg", "L10 Avg"])
 
+# Safe row value fetch
+basis_value = row.get(basis, 0)
 if stat == "Shots on Goal":
-    rate = round((row[basis] / line) * 100, 1) if line > 0 else 0
+    if line > 0 and basis_value is not None:
+        rate = round((basis_value / line) * 100, 1)
+    else:
+        rate = 0
 else:
     lam = float(proj)
     rate = round((1 - math.exp(-lam)) * 100, 1)
@@ -113,8 +101,7 @@ else:
 
 st.dataframe(
     table_df[
-        ["Name", "Team", "Opponent", "Projection",
-         "Season Avg", "L5 Avg", "L10 Avg", "TOI_min"]
+        ["Name", "Team", "Opponent", "Projection", "Season Avg", "L5 Avg", "L10 Avg", "TOI_min"]
     ].sort_values("Projection", ascending=False),
     use_container_width=True
 )
