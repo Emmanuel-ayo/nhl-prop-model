@@ -3,6 +3,10 @@ import pandas as pd
 import joblib
 import math
 
+
+st.write("🔥 THIS IS APP (2).PY 🔥")
+st.stop()
+
 # ---------------------------
 # Helper
 # ---------------------------
