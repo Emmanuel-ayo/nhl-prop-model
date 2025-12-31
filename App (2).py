@@ -87,12 +87,26 @@ line = st.number_input(
 
 basis = st.radio("Hit Rate Based On", ["Season Avg", "L5 Avg", "L10 Avg"])
 
+proj = sog_model.predict(X_player)[0]
+
+st.markdown("### 🎯 Hit Rate")
+
+line = st.number_input(
+    "Prop Line",
+    value=2.5 if stat == "Shots on Goal" else 0.5,
+    step=0.5
+)
+
+basis = st.radio("Hit Rate Based On", ["Season Avg", "L5 Avg", "L10 Avg"])
+
 if stat == "Shots on Goal":
     rate = round((row[basis] / line) * 100, 1) if line > 0 else 0
 else:
-    # Poisson probability of scoring ≥1 goal
-    lam = proj
+    lam = float(proj)   # 🔥 proj NOW EXISTS
     rate = round((1 - math.exp(-lam)) * 100, 1)
+
+st.metric("Estimated Hit Rate", f"{rate}%")
+
 
 st.metric("Estimated Hit Rate", f"{rate}%")
 
