@@ -16,7 +16,16 @@ def toi_to_minutes(toi):
 df = pd.read_excel("nhl_stats.xlsx")
 df["TOI_min"] = df["TOI"].apply(toi_to_minutes)
 
-model = joblib.load("sog_model.pkl")
+
+sog_model = joblib.load("sog_model.pkl")
+goals_model = joblib.load("goals_model.pkl")
+
+
+stat = st.radio(
+    "Select Stat",
+    ["Shots on Goal", "Goals"],
+    horizontal=True
+)
 
 st.set_page_config(layout="wide")
 st.title("🏒 NHL SOG Prop Model")
@@ -29,7 +38,14 @@ df_date = df[df["Date"] == date]
 line = st.number_input("Shot Line", value=2.5, step=0.5)
 
 basis = st.radio("Hit Rate Based On", ["Season Avg", "L5 Avg", "L10 Avg"])
-rate = round((row[basis] / line) * 100, 1) if line > 0 else 0
+if stat == "Shots on Goal":
+    rate = round((row[basis] / line) * 100, 1)
+else:
+    # Goals probability (Poisson approx)
+    import math
+    lam = proj
+    rate = round((1 - math.exp(-lam)) * 100, 1)
+
 
 st.metric("Hit Rate", f"{rate}%")
 st.subheader("📊 Player Projections Table")
@@ -44,14 +60,19 @@ table_df = table_df.dropna(subset=features)
 
 X_pred = table_df[features].astype(float).values  # 👈 IMPORTANT
 
-table_df["Projected SOG"] = model.predict(X_pred)
+if stat == "Shots on Goal":
+    table_df["Projection"] = sog_model.predict(X_pred)
+else:
+    table_df["Projection"] = goals_model.predict(X_pred)
+
 
 # Select columns to display
 display_cols = [
     "Name", "Team", "Opponent",
-    "Projected SOG",
+    "Projection",
     "Season Avg", "L5 Avg", "L10 Avg", "TOI_min"
 ]
+
 
 st.dataframe(
     table_df[display_cols]
@@ -74,7 +95,11 @@ latest = player_df.iloc[0]
 
 features = ["L5 Avg", "L10 Avg", "TOI_min"]
 X_player = latest[features].astype(float).values.reshape(1, -1)
-proj = model.predict(X_player)[0]
+if stat == "Shots on Goal":
+    proj = sog_model.predict(X_player)[0]
+else:
+    proj = goals_model.predict(X_player)[0]
+
 
 c1, c2, c3 = st.columns(3)
 c1.metric("Projected SOG", round(proj, 2))
@@ -100,7 +125,10 @@ latest = player_df.iloc[0]
 
 features = ["L5 Avg", "L10 Avg", "TOI_min"]
 X_player = latest[features].astype(float).values.reshape(1, -1)
-proj = model.predict(X_player)[0]
+if stat == "Shots on Goal":
+    proj = sog_model.predict(X_player)[0]
+else:
+    proj = goals_model.predict(X_player)[0]
 
 c1, c2, c3 = st.columns(3)
 c1.metric("Projected SOG", round(proj, 2))
