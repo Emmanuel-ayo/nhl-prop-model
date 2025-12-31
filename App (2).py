@@ -2,9 +2,10 @@ import streamlit as st
 import pandas as pd
 import joblib
 import math
+import plotly.express as px
 
 st.set_page_config(layout="wide")
-st.title("🏒 NHL Player Prop Model (Dataset Only)")
+st.title("🏒 NHL Player Prop Model (Polished Version)")
 
 # ---------------------------
 # Load dataset and models
@@ -85,11 +86,33 @@ if player_input:
         else:
             table_df["Projection"] = goals_model.predict(X_pred)
 
+        # Highlight selected player
+        def highlight_player(x):
+            return ['background-color: yellow' if x['Name'].lower() == player_clean else '' for i in x]
+
         st.dataframe(
             table_df[
                 ["Name", "Team", "Opponent", "Projection", "Season Avg", "L5 Avg", "L10 Avg", "TOI_min"]
-            ].sort_values("Projection", ascending=False),
-            use_container_width=True
+            ].sort_values("Projection", ascending=False).style.apply(highlight_player, axis=1)
         )
+
+        # ---------------------------
+        # Visualizations
+        # ---------------------------
+        st.markdown("### 📊 Top 10 Player Projections")
+        top10 = table_df.sort_values("Projection", ascending=False).head(10)
+        fig = px.bar(top10, x="Name", y="Projection", color="Projection",
+                     color_continuous_scale="Viridis", title="Top 10 Projections")
+        st.plotly_chart(fig, use_container_width=True)
+
+        st.markdown(f"### 📈 L5 vs L10 Avg for {row['Name']}")
+        avg_df = pd.DataFrame({
+            "Metric": ["L5 Avg", "L10 Avg"],
+            "Value": [row["L5 Avg"], row["L10 Avg"]]
+        })
+        fig2 = px.line(avg_df, x="Metric", y="Value", markers=True,
+                       title=f"L5 vs L10 Avg for {row['Name']}")
+        st.plotly_chart(fig2, use_container_width=True)
+
     else:
         st.error("Player not found in dataset. Make sure the name matches exactly.")
