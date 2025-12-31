@@ -36,13 +36,16 @@ st.title("🏒 NHL Player Prop Model")
 stat = st.radio("Select Stat", ["Shots on Goal", "Goals"], horizontal=True)
 
 date = st.selectbox("Game Date", sorted(df["Date"].dropna().unique()))
-df_date = df[df["Date"] == date]
+df_date = df[df["Date"] == date].copy()
 
 # ---------------------------
-# Player selection
+# Player selection (case-insensitive & stripped)
 # ---------------------------
-player = st.selectbox("Select Player", sorted(df_date["Name"].unique()))
-row = df_date[df_date["Name"] == player].iloc[0]
+df_date["Name_clean"] = df_date["Name"].str.strip().str.lower()
+players_available = sorted(df_date["Name"].dropna().unique())
+player = st.selectbox("Select Player", players_available)
+
+row = df_date[df_date["Name_clean"] == player.strip().lower()].iloc[0]
 
 # ---------------------------
 # Projection
@@ -73,7 +76,6 @@ line = st.number_input(
 
 basis = st.radio("Hit Rate Based On", ["Season Avg", "L5 Avg", "L10 Avg"])
 
-# Safe row value fetch
 basis_value = row.get(basis, 0)
 if stat == "Shots on Goal":
     if line > 0 and basis_value is not None:
